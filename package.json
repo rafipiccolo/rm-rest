@@ -1,0 +1,24 @@
+{
+  "name": "rm-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rafipiccolo/rm-api.git"
+  },
+  "author": "Raphael Piccolo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rafipiccolo/rm-api/issues"
+  },
+  "homepage": "https://github.com/rafipiccolo/rm-api#readme",
+  "dependencies": {
+    "arraystat": "^1.0.1",
+    "express": "^4.17.1",
+    "method-override": "^3.0.0"
+  }
+}

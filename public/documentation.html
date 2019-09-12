@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>API DOCUMENTATION</title>
+  </head>
+  <body>
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <!-- We will put our React component inside this div. -->
+    <div id="root">
+    </div>
+
+    <!-- Load React. -->
+    <!-- Note: when deploying, replace "development.js" with "production.min.js". -->
+    <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <!-- JQUERY -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+
+    <style type="text/css">
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+            margin: 0;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        h1 {
+            font-weight: 100;
+        }
+
+        td {
+            vertical-align: top;
+            padding: 10px 20px;
+        }
+
+        .code-container {
+            background-color: #5c666f;
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        .doc-container {
+            background-color: white;
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        .label {
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            margin-right: 10px;
+            background-color: #01b48f;
+        }
+
+        .code {
+            background-color: #4e575e;
+            color: white;
+            padding: 10px 20px;
+        }
+
+        .sidebar {
+            background-color: #f8f8f8;
+            min-height: 100vh;
+            float: left;
+            width: 20%;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            overflow: auto;
+            padding: 40px;
+        }
+
+        .main {
+            min-height: 100vh;
+            float: right;
+            width: 80%;
+        }
+
+    </style>
+
+    <!-- Load our React component. -->
+    <script type="text/babel">
+        var serialize = obj => Object.keys(obj).map(key => encodeURIComponent(key) + '=' + encodeURIComponent(obj[key])).join('&');
+
+        class App extends React.Component {
+            constructor(props) {
+                super(props);
+                this.state = {
+                    json: null,
+                    language: 'nodejs',
+                    url: window.location.origin + window.location.pathname,
+                };
+                
+                $.get( this.state.url+"/readme.html", ( readme ) => {
+                    this.setState({ readme: readme });
+                });
+
+                setInterval(() => {
+                    $.get( this.state.url+"/api.json", ( data ) => {
+                        this.setState({ json: data });
+                    });
+                }, 1000)
+            }
+
+            showRequest(data, exemple) {
+                if (this.state.language == 'nodejs')
+                    return this.showNodejs(data, exemple);
+                else if (this.state.language == 'curl')
+                    return this.showCurl(data, exemple);
+                else if (this.state.language == 'cli')
+                    return this.showCli(data, exemple);
+            }
+
+            showNodejs(data, exemple) {
+                var obj = {
+                    url: this.state.url+data.path,
+                    method: data.method.toUpperCase(),
+                    json: true,
+                };
+                if (exemple.request.body && Object.keys(exemple.request.body).length) obj.form = exemple.request.body;
+                if (exemple.request.query && Object.keys(exemple.request.query).length) obj.url += '?'+serialize(exemple.request.query);
+                if (exemple.request.headers && Object.keys(exemple.request.headers).length) obj.headers = exemple.request.headers;
+
+                return 'request('+JSON.stringify(obj, null, 4)+', function(err, response, body) {\n'+
+                '    if (err) return console.log(err);\n'+
+                '    console.log("received", body);\n'+
+                '});';
+            }
+
+            showCurl(data, exemple) {
+                var s = 'curl -X '+data.method.toUpperCase();
+
+                var url = this.state.url+data.path;
+                if (exemple.request.query && Object.keys(exemple.request.query).length) url += '?'+serialize(exemple.request.query);
+
+                if (exemple.request.headers && Object.keys(exemple.request.headers).length)
+                    s += Object.keys(exemple.request.headers).map((headerName) => ' \\\n --header \''+headerName+': '+exemple.request.headers[headerName]+'\'').join('')
+
+                if (exemple.request.body && Object.keys(exemple.request.body).length)
+                    s += Object.keys(exemple.request.body).map((name) => ' \\\n --data '+name+'='+exemple.request.body[name]).join('')
+
+                s += ' \\\n  \''+url+'\'';
+
+                return s;
+            }
+
+            showCli(data, exemple) {
+                var s = 'node cli.js '+data.name;
+                var params = {...exemple.request.query, ...exemple.request.headers, ...exemple.request.body}
+                s += Object.keys(params).map((name) => ' --'+name+' '+params[name]).join('')
+                return s;
+            }
+
+            showExemples(data) {
+                if (!data.exemples) return;
+
+                return data.exemples.map( (exemple, i) => { 
+                    return (
+                        <div key={i.toString()}>
+                            <h1 style={{color: 'white'}}>Exemple</h1>
+                            <p style={{color: 'white'}}>
+                                {exemple.description}
+                                {exemple.mocha == 'ok' ?
+                                    (<span><i className="fa fa-check" style={{color: '#00ff00', padding: '0px 5px'}}></i> OK</span>)
+                                :
+                                    (<span><i className="fa fa-times" style={{color: '#ff0000', padding: '0px 5px'}}></i> Fail</span>)
+                                }
+                            </p>
+                            
+                            <h1 style={{color: 'white'}}>Request</h1>
+                            <button style={{padding: '10px', background: this.state.language == 'nodejs' ? '#4e575e' : '#393f44', border: 'none', color: 'white'}} onClick={() => this.setState({language: 'nodejs'}) }>nodejs</button>
+                            <button style={{padding: '10px', background: this.state.language == 'curl' ? '#4e575e' : '#393f44', border: 'none', color: 'white'}} onClick={() => this.setState({language: 'curl'}) }>curl</button>
+                            <button style={{padding: '10px', background: this.state.language == 'cli' ? '#4e575e' : '#393f44', border: 'none', color: 'white'}} onClick={() => this.setState({language: 'cli'}) }>cli</button>
+                            <pre className="code" style={{marginTop: 0}}>{this.showRequest(data, exemple)}</pre>
+
+                            <h1 style={{color: 'white'}}>Response</h1>
+                            <pre className="code">{JSON.stringify(exemple.response, null, 4)}</pre>
+                        </div>
+                    )
+                })
+            }
+
+            showMocha(data, counters) {
+                if (!data.exemples) return;
+
+                var nbOk = data.exemples.filter((e) => e.mocha == 'ok').length
+                var nbKo = data.exemples.filter((e) => e.mocha == 'ko').length
+                var nb = data.exemples.length;
+
+                var res = [];
+                if (nb == 0)
+                    res.push(<i key="1" className="fa fa-warning" style={{color: 'orange', padding: '0px 5px'}}></i>);
+                else if (nbOk == nb)
+                    res.push(<i key="2" className="fa fa-check" style={{color: 'green', padding: '0px 5px'}}></i>);
+                else
+                    res.push(<i key="3" className="fa fa-times" style={{color: 'red', padding: '0px 5px'}}></i>)
+
+                if (counters)
+                    if (nbOk == nb)
+                        res.push(<span key="4" >{nbOk}/{nb}</span>)
+                    else
+                        res.push(<span key="5" >{nbKo} FAIL</span>)
+
+                return res;
+            }
+
+            showContent() {
+                if (!this.state.json) return null;
+
+                var array = [];
+                var routes = this.state.json
+                for (var routeName in routes) {
+                    var data = routes[routeName];
+
+                    array.push(
+                        <div key={routeName}>
+                            <div style={{width: '50%', float: 'left'}} className="doc-container">
+                                <h1 id={routeName}>{data.description}</h1>
+                                <span className="label">{data.method}</span><span>{data.path}</span>
+                                <br />
+                                <br />
+
+                                <span style={{float: 'left', width: '33.33%'}}>
+                                    { this.showMocha(data, 1) } Tests
+                                </span>
+                                
+                                <span style={{float: 'left', width: '33.33%'}}>
+                                    <i className="fa fa-rocket" style={{color: 'blue', padding: '0px 5px'}}></i> {data.nb||0} Calls<br />
+                                    {data.nbErrParams||0} ParamErr<br />
+                                    {data.nbErrHandler||0} HandlerErr<br />
+                                </span>
+                                
+                                <span style={{float: 'left', width: '33.33%'}}>
+                                    <i className="fa fa-clock-o" style={{color: 'blue', padding: '0px 5px'}}></i> SPEED<br />
+                                    {data.msAvg||'_'} ms (avg)<br />
+                                    {data.msMin||'_'} ms (min)<br />
+                                    {data.msMax||'_'} ms (max)<br />
+                                </span>
+
+                                <div style={{clear: 'both'}}></div>
+                                
+                                <h3>Parameters</h3>
+                                <table style={{width: '100%', backgroundColor: '#f5f5f5'}}>
+                                    <tbody>
+                                        { this.showParams(data.params) }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div style={{width: '50%', float: 'right'}} className="code-container">
+                                { this.showExemples(data) }
+                            </div>
+                            <div style={{clear: 'both'}}></div>
+                        </div>
+                    )
+                }
+
+                return array;
+            }
+
+            showSidebar() {
+                if (!this.state.json) return null;
+
+                var array = [];
+
+                var routeName = 'firstPage';
+                array.push(<div key={routeName}><a href={"#"+routeName}>Presentation</a></div>)
+                array.push(<br key="br" />);
+
+                var routes = this.state.json
+                for (var routeName in routes) {
+                    array.push(<div key={routeName}><a href={"#"+routeName}>{routeName} {this.showMocha(routes[routeName])}</a></div>)
+                }
+            
+                return array;
+            }
+
+            showParams(params) {
+                var array = [];
+                for (var paramName in params) {
+                    var data = params[paramName];
+
+                    var sentences = [];
+                    if (data.default != undefined) sentences.push(<p key="default" style={{margin: 0}}>Default: {data.default}</p>);
+                    if (data.min != undefined) sentences.push(<p key="min" style={{margin: 0}}>Min: {data.min}</p>);
+                    if (data.max != undefined) sentences.push(<p key="max" style={{margin: 0}}>Max: {data.max}</p>);
+                    if (data.values) sentences.push(<p key="values" style={{margin: 0}}>Possible values: <br />
+                        {data.values.map((value) => (
+                            <span key={value}>&bull; {value}<br /></span>
+                        ))}
+                    </p>);
+
+                    array.push(
+                        <tr key={paramName}>
+                            <td>
+                                <b>{paramName} {data.required ? '*' : ''}</b><br />
+                                <i>{data.type}</i><br />
+                            </td>
+                            <td>
+                                {data.description}<br />
+                                <div style={{fontSize: '14px'}}>{sentences}</div>
+                            </td>
+                            <td>
+                                <i>{data.from}</i>
+                            </td>
+                        </tr>
+                    )
+                }
+
+                return array;
+            }
+
+            render() {
+                return (
+                    <div>
+                        <div className="sidebar">
+                            <h1>Routes</h1>
+                            { this.showSidebar() }
+                        </div>
+                        <div className="main">
+                            <div dangerouslySetInnerHTML={{__html: this.state.readme}} />
+                            { this.showContent() }
+                        </div>
+                    </div>
+                );
+            }
+        }
+
+        ReactDOM.render(<App/>, document.querySelector('#root'));
+
+    </script>
+
+  </body>
+</html>

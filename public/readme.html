@@ -1,0 +1,138 @@
+<div style="min-height: 100vh; padding: 40px 40px 100px 40px; display: hidden;" id="firstPage">
+    <h1>Presentation</h1>
+
+    <h2>General technical information for users</h2>
+    <p>Every endpoint consumes json and returns json by default</p>
+    <p>When an error occurs, the returned json contains an error field describing the error.<br />
+    This error field contains a message which can be displayed as-is to the final user and a code which can be used by the developper to provide another solution if needed.<br />
+    It can Also contain various additional data depending on the use case.<br />
+    <b>exemple of erroneous response</b> :<br />
+    </p>
+    <pre class="code">
+    {
+        error: {
+            code: 'NOTFOUND',
+            message: 'page not found /test',
+            path: '/test',
+        }
+    }
+    </pre>
+    <b>exemple of successful response</b> :<br />
+    <pre class="code">
+    {
+        id: '1',
+        name: 'raf',
+    }
+    </pre>
+    
+    <h2>Authentication</h2>
+    <p>When a particular endpoint requires authentication. You should provide a special Authentication header to get this ressource. You can obtain it from a previous call to the login endpoint</p>
+    <b>exemple</b> :<br />
+    <pre class="code">
+    $> curl -X POST http://localhost:3000/api/v1/login --data="email=raf&password=test"
+    {
+        id: '4',
+        email: 'raf',
+        token: "907c762e069589c2cd2a229cdae7b8778caa9f07",
+    }
+    $> curl --header "Authorization: Bearer 907c762e069589c2cd2a229cdae7b8778caa9f07" http://localhost:3000/api/v1/securezone
+    {
+        secureData: '42',
+    }
+    </pre>
+
+    <h2>Information for internal API developpers</h2>
+    <h3>Starting the API</h3>
+    You can start the project this way : <br />
+    <pre class="code">
+    $> node server.js
+    </pre>
+    You can then open the documentation from your browser.<br />
+    <a href="http://localhost:3000/" target="_blank">http://localhost:3000/</a>
+    
+    <h3>Using the API From the network</h3>
+    <pre class="code">
+    $> curl -X POST http://localhost:3000/api/v1/product -d "name=raf"
+    {id: 1, name: "raf"}
+    </pre>
+    <p>Many exemples are available from the browser documentation</p>
+    
+    <h3>Using the API from the CLI</h3>
+    A CLI is also provided in order to run directly the api endpoints from the command line. No need to start the server in this case. The CLI will call the relevant files directly.<br />
+    <pre class="code">
+    $> node cli.js productInsert --name raf
+    {id: 1, name: "raf"}
+    </pre>
+    You can also get a detailed documentation too from this tool.
+    <pre class="code">
+    $> node cli.js
+    cli.js &ltcommand&gt
+
+    Commandes:
+      cli.js productInsert   Create a product
+      cli.js productUpdate   Update a product
+      cli.js productFindOne  returns the product found by its id
+      cli.js productDelete   delete the product based on its id
+      cli.js productFind     lists the products using various filters
+
+    Options:
+      --version  Prints version NUmber                             [boolean]
+      --help     Shows help                                        [boolean]
+
+    Not enough arguments provided: got 0, need 1
+    </pre>
+    <p>Or even for a particular command</p>
+    <pre class="code">
+    $> node cli.js productInsert --help
+    cli.js productInsert
+
+    Create a product
+
+    Options:
+      --version  Affiche le numéro de version                      [boolean]
+      --help     Affiche de l'aide                                 [boolean]
+      --name     Name of the product                              [required]
+      --type     product type                                     [required]
+      --nbRoom   Number of rooms
+    </pre>
+
+    <h3>File organisation</h3>
+    The commands/index.js file loads all the api commands.<br />
+    <pre class="code">
+        $> cat commands/index.js
+        module.exports = [
+            {
+                version: '/api/v1', 
+                routes: {
+                    productInsert: require('./productInsert.js'),
+                    productUpdate: require('./productUpdate.js'),
+                    productFindOne: require('./productFindOne.js'),
+                    productFind: require('./productFind.js'),
+                    productDelete: require('./productDelete.js'),
+                }
+            }
+        ];
+    </pre>
+    The commands/productInsert.js file exports a unique hander function with a full detailed specification and units tests.<br />
+    This function shoudl always receive an object of all the parameters defined in the api and a callback.<br />
+    The callback should then be called with callback(err) or callback(null, data) depending on the success of the command.<br />
+    This function will be automatically executed when u call the Api from the cli or from the network.<br />
+    <pre class="code">
+    $> cat commands/productInsert.js
+    var model = require('../lib/fileModel.js');
+    
+    module.exports = {
+        description: 'Create a product',
+        path: '/product',
+        method: 'post',
+        handler: handler
+    };
+
+    function handler(params, callback) {
+        model.insert('product', params, callback);
+    }
+
+    $> node cli.js productInsert --name test
+    {id: 1, name: "test"}
+    </pre>
+</div>
