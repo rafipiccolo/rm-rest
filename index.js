@@ -1,4 +1,5 @@
 var express = require('express');
+var arraypushrotate = require('arraypushrotate');
 
 module.exports = function(options) {
     var router = express.Router();
@@ -13,7 +14,7 @@ module.exports = function(options) {
     var logger = options.logger;
     documentation(router, logger);
     routes(router, logger, options.commandsDir);
-        
+
     return router;
 }
 
@@ -47,14 +48,12 @@ function routes(router, logger, commandsDir) {
     var timerEnd = function(req, route) {
         var diff = process.hrtime(req.start);
         var ms = diff[0]*1000+diff[1]/1000000;
+        
         // met le resultat dans un tableau (n'en garde que X à la fois) puis calcule des stats
         route.mss = route.mss || [];
-        if (route.mss.length >= 10) route.mss.shift();
-        route.mss.push(ms);
-        var stats = require('arraystat')(route.mss);
-        route.msMin = stats.min;
-        route.msMax = stats.max;
-        route.msAvg = parseInt(stats.avg);
+        arraypushrotate(route.mss, ms, 10)
+        route.msStats = require('arraystat')(route.mss);
+
         return ms;
     };
 
@@ -63,13 +62,13 @@ function routes(router, logger, commandsDir) {
         var {path, method, handler} = apis[routeName];
 
         // on enregistre la route dans express
-        logger.info('registering ' + method + ' ' + routeName + ' at '+path, {type: 'express'});
+        logger.info('express', 'registering ' + method + ' ' + routeName + ' at ' + path);
         router[method](path, function(req, res, next) {
 
             // on genere un id de requete
             req.id = req.headers['x-request-id'] || require('crypto').randomBytes(16).toString('hex');
 
-            logger.info(req.method+' '+path, {type: 'express', reqId: req.id});
+            logger.info('express', req.method+' '+path, {reqId: req.id});
             
             // on parse les parametres
             increment(apis[routeName], 'nb');
@@ -86,7 +85,7 @@ function routes(router, logger, commandsDir) {
                     
                     // on renvoie le résultat
                     res.send(data);
-                    logger.info('response 200 '+JSON.stringify(data).length+' bytes '+ms+' ms', {type: 'express', reqId: req.id});
+                    logger.info('express', 'response 200 '+JSON.stringify(data).length+' bytes '+ms+' ms', {reqId: req.id});
                 });
             });
         });    
@@ -104,8 +103,7 @@ function routes(router, logger, commandsDir) {
 
     router.use(function(err, req, res, next) {
         err.status = err.status || 500;
-        logger.error('response '+err.status, {
-            type: 'express',
+        logger.error('express', 'response '+err.status, {
             reqId: req.id,
             ip: req.ip,
             userAgent: req.headers['user-agent'],

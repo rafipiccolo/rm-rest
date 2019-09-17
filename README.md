@@ -2,9 +2,8 @@
 
 This module allows to create an express compatible rest api with a full documentation
 
-# Usage
+# create server.js
 
-## create server.js
 It will be the entry point of your project
 The api can be mounted anywhere. Here it is mounting the "commands" directory on "/api/v1"
 commandsDir must be an absolute path.
@@ -30,13 +29,13 @@ commandsDir must be an absolute path.
         console.log('> Ready on http://localhost:'+port)
     })
 
-## create the command list : commands/index.js
+# create the command list : commands/index.js
 
     module.exports = {
         test: require('./test.js'),
     };
 
-## create a command :
+# create a command :
 
     module.exports = {
         description: 'Create a test',
@@ -90,7 +89,7 @@ commandsDir must be an absolute path.
         return callback(null, {message: 'ok'});
     }
 
-## run
+# run
 
     $> node server.js
 
@@ -98,7 +97,7 @@ or specify port
 
     $> PORT=3333 node server.js
 
-## test
+# test
 
     $> curl http://localhost:3000
     ready

@@ -5,12 +5,12 @@ const app = express()
 
 // debugs & perf
 app.use('/api/v1', api({
-    commandsDir: __dirname+'/samples',
+    commandsDir: __dirname+'/commands',
     logger: console,
 }));
 
 app.get('/', function(req, res, next) {
-    res.send('root');
+    res.send('ready');
 });
 
 var port = process.env.PORT || 3000;
