@@ -32,7 +32,6 @@ function documentation(router, logger) {
 function routes(router, logger, commandsDir) {
     var getApiData = require('./lib/getApiData.js');
     
-    // if (!commandsDir) return;
     var apis = getApiData(commandsDir);
 
     router.get('/api.json', function (req, res, next) {

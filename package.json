@@ -1,6 +1,6 @@
 {
   "name": "rm-rest",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/rafipiccolo/rm-rest#readme",
   "dependencies": {
+    "arraypushrotate": "^1.0.1",
     "arraystat": "^1.0.1",
     "express": "^4.17.1",
     "method-override": "^3.0.0"
