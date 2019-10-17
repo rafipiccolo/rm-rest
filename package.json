@@ -1,7 +1,7 @@
 {
   "name": "rm-rest",
-  "version": "1.0.4",
-  "description": "",
+  "version": "1.0.5",
+  "description": "express custom api",
   "main": "index.js",
   "scripts": {
     "test": "mocha"
