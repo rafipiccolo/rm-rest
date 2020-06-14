@@ -4,12 +4,9 @@ var arraypushrotate = require('arraypushrotate');
 module.exports = function(options) {
     var router = express.Router();
     
-    // default    
+    // default
     router.use(express.json());
     router.use(express.urlencoded({ extended: true }));
-
-    var methodOverride = require('method-override');
-    router.use(methodOverride('X-HTTP-Method-Override'));
 
     var logger = options.logger;
     documentation(router, logger);

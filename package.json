@@ -1,6 +1,6 @@
 {
   "name": "rm-rest",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "express custom api",
   "main": "index.js",
   "scripts": {
@@ -19,7 +19,6 @@
   "dependencies": {
     "arraypushrotate": "^1.0.1",
     "arraystat": "^1.0.1",
-    "express": "^4.17.1",
-    "method-override": "^3.0.0"
+    "express": "^4.17.1"
   }
 }
